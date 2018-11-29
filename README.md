@@ -221,3 +221,17 @@ def find_rule(d, support, confidence):
     return result
 
 find_rule(d, support, confidence).to_excel('rules.xls')
+
+
+
+from apriori import *
+import pandas as pda
+filename="D:/Python35/data/lesson_buy.xls"
+dframe=pda.read_excel(filename,header=None)
+change=lambda x:pda.Series(1,index=x[pda.notnull(x)])
+mapok=map(change,dframe.as_matrix())
+data=pda.DataFrame(list(mapok)).fillna(0)
+#设置置信度阈值和支持度阈值
+surpport=0.2
+cfd=0.3
+print(find_rule(data,surpport,cfd))
