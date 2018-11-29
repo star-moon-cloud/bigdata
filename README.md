@@ -97,3 +97,14 @@ if __name__ == "__main__":
 
     ssc.start()
     ssc.awaitTermination()
+
+from pyspark import SparkContext
+ 
+inputFile = 'hdfs://master:9000/temp/hdin/*'        #测试文档
+outputFile = 'hdfs://master:9000/temp/spark-out'    #结果目录
+ 
+sc = SparkContext('local', 'wordcount')
+text_file = sc.textFile(inputFile)
+ 
+counts = text_file.flatMap(lambda line: line.split(' ')).map(lambda word: (word, 1)).reduceByKey(lambda a, b: a+b)
+counts.saveAsTextFile(outputFile)
