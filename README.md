@@ -75,25 +75,18 @@ object NetworkWordCount {
     
   }
 }
-import org.apache.spark._
-import org.apache.spark.streaming._
-import org.apache.spark.streaming.StreamingContext._
+from pyspark import SparkContext
+from pyspark.streaming import StreamingContext
 
-object Sample {
+# Create a local StreamingContext with two working thread and batch interval of 1 second
+sc = SparkContext("local[2]", "NetworkWordCount")
+ssc = StreamingContext(sc, 1)
+lines = ssc.socketTextStream("localhost", 9999)
+words = lines.flatMap(lambda line: line.split(" "))
+pairs = words.map(lambda word: (word, 1))
+wordCounts = pairs.reduceByKey(lambda x, y: x + y)
 
-  def main(args: Array[String]):Unit = {
-    val numReceivers = 2 //note: has to be >= 2
-    val conf = new SparkConf().setMaster(s"local[${numReceivers}]").setAppName("YetAnotherWordCountExample")
-    val ssc = new StreamingContext(conf, Seconds(1))
-    
-    val lines = ssc.socketTextStream("localhost", 9999)
-
-    val wordCounts = lines.flatMap(_.split(" ")).map(word => (word, 1)).reduceByKey(_+_)
-    wordCounts.print() //output operation is this
-
-    ssc.start()
-    ssc.awaitTermination()
-  }
-
-}
-
+# Print the first ten elements of each RDD generated in this DStream to the console
+wordCounts.pprint()
+ssc.start()             # Start the computation
+ssc.awaitTermination()
