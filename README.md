@@ -47,3 +47,33 @@ for ind, row in train.iloc[0:3].iterrows():#iloc方法(介绍见后)来获得前
     #save to file
     im = Image.fromarray(arr)
     im.save("./train_pics/%s-%s.png" % (ind, i))#第一个%s（ind）表示它是第几幅图像，第二个%s表示这个图像里面数字是几 ,注意该语句不能产生文件夹，需要现在指定目录建一个文件夹
+
+
+import org.apache.spark.SparkConf
+import org.apache.spark.storage.StorageLevel
+import org.apache.spark.streaming.{Seconds, StreamingContext}
+object NetworkWordCount {
+  
+  def main(args: Array[String]) {
+    if (args.length < 2) {
+      System.err.println("Usage: NetworkWordCount <hostname> <port>")
+      System.exit(1)
+    }
+    StreamingExamples.setStreamingLogLevels()
+
+    val sparkConf = new SparkConf().setAppName("NetworkWordCount")
+    val ssc = new StreamingContext(sparkConf, Seconds(1))
+
+    val lines = ssc.socketTextStream(args(0), args(1).toInt, 
+                                  StorageLevel.MEMORY_AND_DISK_SER)
+    val words = lines.flatMap(_.split(" "))
+    val wordCounts = words.map(x => (x, 1)).reduceByKey(_ + _)
+    wordCounts.print()
+    ssc.start() 
+    ssc.awaitTermination() 
+    
+    
+  }
+}
+
+
